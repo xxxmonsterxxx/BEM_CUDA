@@ -84,3 +84,32 @@ void GalerkinSerial::CalculateInfMatrix()
 		}
 	}
 }
+
+void GalerkinSerial::CalculatePotentialField()
+{
+	if (!initialisedData || !initialisedCoeffs) {
+		printf("\nFalse while reading input data");
+		return;
+	}
+
+	ResetData();
+
+	for (int i = 0; i < potFieldSize; i += 3) {
+		float x = potField[i + 0];
+		float y = potField[i + 1];
+
+		// local boundary element info
+		uint beNumInfoK = 8; // shift multiplier = size of beinfo struct
+		
+		for (int be = 0; be < beNum; be++) {
+			float xBELoc = beInfo[be * beNumInfoK + 2];
+			float yBELoc = beInfo[be * beNumInfoK + 3];
+			float alphaBELoc = beInfo[be * beNumInfoK + 6];
+			float lngBELoc = beInfo[be * beNumInfoK + 7];
+
+			potField[i + 2] += coeffs[be*3 + 0] * IG(x, y, xBELoc, yBELoc, lngBELoc, alphaBELoc, 1);
+			potField[i + 2] += coeffs[be*3 + 1] * IG(x, y, xBELoc, yBELoc, lngBELoc, alphaBELoc, 2);
+			potField[i + 2] += coeffs[be*3 + 2] * IG(x, y, xBELoc, yBELoc, lngBELoc, alphaBELoc, 3);
+		}
+	}
+}

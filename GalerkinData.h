@@ -3,6 +3,10 @@
 #include "Additional.h"
 
 namespace GalerkinMethod {
+	extern bool initialisedCoeffs;
+	extern uint coeffsSize;
+	extern float* coeffs;
+
 	extern bool initialisedData;
 	extern uint numIntDiscr; // discretization of be for numeric integrate
 

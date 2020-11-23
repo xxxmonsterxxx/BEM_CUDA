@@ -5,16 +5,22 @@
 #include "GalerkinSmoothSerial.h"
 #include <ctime>
 
+using namespace GalerkinMethod;
+
 int main()
 {
     uint start_time;
     uint end_time;
     uint spand_time;
 
-    /*GalerkinMethod::InitInputData();
-    for (int i = 0; i < 4; i++) {
+    GalerkinMethod::InitInputData();
+//    GalerkinCuda::CalculatePotentialField();
+    GalerkinSerial::CalculatePotentialField();
+    for (int i = 0; i < potFieldSize; i++)
+        printf("\n%f", potField[i]);
+    /*for (int i = 0; i < 4; i++) {
         start_time = clock();
-        GalerkinCuda::Solve();
+        GalerkinCuda::CalculateInfMatrix();
         end_time = clock();
         spand_time = end_time - start_time;
         printf("\nCuda computation time = %d\n", spand_time);
@@ -26,7 +32,7 @@ int main()
     spand_time = end_time - start_time;
     printf("\nSeq. computation time = %d\n", spand_time);*/
 
-    GalerkinMethod::InitInputSmoothData();
+    /*GalerkinMethod::InitInputSmoothData();
     for (int i = 0; i < 4; i++) {
         start_time = clock();
         GalerkinCudaSmooth::CalculateInfMatrix();
@@ -39,7 +45,7 @@ int main()
     GalerkinSmoothSerial::CalculateInfMatrix();
     end_time = clock();
     spand_time = end_time - start_time;
-    printf("\nSeq. computation time = %d\n", spand_time);
+    printf("\nSeq. computation time = %d\n", spand_time);*/
 
     return 0;
 }
