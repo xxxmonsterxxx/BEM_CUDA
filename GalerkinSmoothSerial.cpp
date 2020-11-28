@@ -131,3 +131,61 @@ void GalerkinSmoothSerial::CalculateInfMatrix()
 		}
 	}
 }
+
+void GalerkinSmoothSerial::CalculatePotentialField()
+{
+	if (!initialisedSmoothData || !initialisedCoeffs) {
+		printf("\nFalse while reading input data");
+		return;
+	}
+
+	ResetData();
+
+	for (uint i = 0; i < potFieldSize; i += 3) {
+		float x = potField[i + 0];
+		float y = potField[i + 1];
+
+		for (uint be = 0; be < beNum; be++) {
+			// boundary element info
+			uint beNumInfoK1 = 19; // shift multiplier = size of beinfo struct odd
+			uint beNumInfoK2 = 7;  // shift multiplier = size of beinfo struct even
+			uint beNum = be;
+			uint beNumId = (beNum % 2) ? ((beNum - 1) / 2) * (beNumInfoK1 + beNumInfoK2) + beNumInfoK1 : (beNum / 2) * (beNumInfoK1 + beNumInfoK2);
+
+			float xBEL, yBEL, lngBEL, alphaBEL; // be info for LEFT side
+			float xBE, yBE, lngBE, alphaBE;	// be info for CENTER
+			float xBER, yBER, lngBER, alphaBER; // be info for RIGHT side
+			uint BEType = beInfo[beNumId + 2];
+
+			if (BEType == 1) {
+				xBE = beInfo[beNumId + 3];
+				yBE = beInfo[beNumId + 4];
+				lngBE = beInfo[beNumId + 5];
+				alphaBE = beInfo[beNumId + 6];
+			}
+			else if (BEType == 2) {
+				xBEL = beInfo[beNumId + 5];
+				yBEL = beInfo[beNumId + 6];
+				alphaBEL = beInfo[beNumId + 9];
+				lngBEL = beInfo[beNumId + 10];
+
+				xBER = beInfo[beNumId + 13];
+				yBER = beInfo[beNumId + 14];
+				alphaBER = beInfo[beNumId + 17];
+				lngBER = beInfo[beNumId + 18];
+			}
+
+			uint coeffInd = be;
+
+			float increment = 0;
+
+			if (BEType == 1)
+				increment = coeffs[coeffInd] * IG(x, y, xBE, yBE, lngBE, alphaBE, 2);
+			else if (BEType == 2)
+				increment = coeffs[coeffInd] * (IG(x, y, xBEL, yBEL, lngBEL, alphaBEL, 3) +
+					IG(x, y, xBER, yBER, lngBER, alphaBER, 1));
+
+			potField[i + 2] += increment;
+		}
+	}
+}

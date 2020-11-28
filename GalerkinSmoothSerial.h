@@ -4,4 +4,6 @@
 
 namespace GalerkinSmoothSerial {
 	void CalculateInfMatrix();
+
+	void CalculatePotentialField();
 }

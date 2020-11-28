@@ -180,3 +180,111 @@ void GalerkinCudaSmooth::CalculateInfMatrix()
 	cudaDeviceReset();
 	printf("\nSolved success!");
 }
+
+__global__ void GalerkinCudaSmooth::NodePotential(float* nodes, float* beinfo, float* coeffs)
+{
+	uint nodeInd = (blockIdx.x * gridDim.y + blockIdx.y) * 3;
+	float x = nodes[nodeInd + 0];
+	float y = nodes[nodeInd + 1];
+
+
+	// boundary element info
+	uint beNumInfoK1 = 19; // shift multiplier = size of beinfo struct odd
+	uint beNumInfoK2 = 7;  // shift multiplier = size of beinfo struct even
+	uint beNum = threadIdx.x;
+	uint beNumId = (beNum % 2) ? ((beNum - 1) / 2) * (beNumInfoK1 + beNumInfoK2) + beNumInfoK1 : (beNum / 2) * (beNumInfoK1 + beNumInfoK2);
+
+	float xBEL, yBEL, lngBEL, alphaBEL; // be info for LEFT side
+	float xBE,  yBE,  lngBE,  alphaBE;	// be info for CENTER
+	float xBER, yBER, lngBER, alphaBER; // be info for RIGHT side
+	uint BEType = beinfo[beNumId + 2];
+
+	if (BEType == 1) {
+		xBE = beinfo[beNumId + 3];
+		yBE = beinfo[beNumId + 4];
+		lngBE = beinfo[beNumId + 5];
+		alphaBE = beinfo[beNumId + 6];
+	}
+	else if (BEType == 2) {
+		xBEL = beinfo[beNumId + 5];
+		yBEL = beinfo[beNumId + 6];
+		alphaBEL = beinfo[beNumId + 9];
+		lngBEL = beinfo[beNumId + 10];
+
+		xBER = beinfo[beNumId + 13];
+		yBER = beinfo[beNumId + 14];
+		alphaBER = beinfo[beNumId + 17];
+		lngBER = beinfo[beNumId + 18];
+	}
+
+	uint coeffInd = threadIdx.x;
+
+	float increment = 0;
+
+	if (BEType == 1)
+		increment = coeffs[coeffInd] * IG(x, y, xBE, yBE, lngBE, alphaBE, 2);
+	else if (BEType == 2)
+		increment = coeffs[coeffInd] * (IG(x, y, xBEL, yBEL, lngBEL, alphaBEL, 3) +
+								  IG(x, y, xBER, yBER, lngBER, alphaBER, 1));
+
+	atomicAdd(&nodes[nodeInd + 2], increment);
+}
+
+void GalerkinCudaSmooth::CalculatePotentialField()
+{
+	if (!initialisedSmoothData || !initialisedCoeffs) {
+		printf("\nFalse while reading input data");
+		return;
+	}
+
+	ResetData();
+
+	cudaSetDevice(0);
+
+	// try to parallel maximal effective
+	// we have 3N [N - number of boundary elements] equations
+	// each equation is a result of numeric integral and is a sum of p_j*k [j=1..N]
+	// so we need to calculate each k
+
+	//cudaDeviceProp prop;
+	//cudaGetDeviceProperties(&prop, 0);
+	//printf("Device is %s\nnumber of blocks %dx%dx%d (each %dx%dx%d) = number of threads %d\n", prop.name,
+	//	prop.maxGridSize[0],
+	//	prop.maxGridSize[1],
+	//	prop.maxGridSize[2],
+	//	prop.maxThreadsDim[0],
+	//	prop.maxThreadsDim[1],
+	//	prop.maxThreadsDim[2],
+	//	prop.maxThreadsPerBlock);
+
+	dim3 blockSize = dim3(beNum, 1, 1); // each cofficient is a summ of numIntDiscr terms
+	dim3 gridSize = dim3(fdSizeX, fdSizeY, 1); // each boundary element have 3 equation which consist of (beNum * 3) coefficients
+
+	// data pointers for a kernel
+	float* cudaPotField;
+	float* cudaBeInfo;
+	float* cudaCoeffs;
+	cudaMalloc((void**)&cudaPotField, potFieldSize * sizeof(float));
+	cudaMalloc((void**)&cudaBeInfo, beInfoSize * sizeof(float));
+	cudaMalloc((void**)&cudaCoeffs, coeffsSize * sizeof(float));
+	cudaMemcpy(cudaPotField, potField, potFieldSize * sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(cudaBeInfo, beInfo, beInfoSize * sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(cudaCoeffs, coeffs, coeffsSize * sizeof(float), cudaMemcpyHostToDevice);
+
+	NodePotential <<< gridSize, blockSize >>> (cudaPotField, cudaBeInfo, cudaCoeffs);
+
+
+	cudaError_t cudaerr = cudaDeviceSynchronize();
+	if (cudaerr != cudaSuccess)
+		printf("kernel launch failed with error \"%s\".\n",
+			cudaGetErrorString(cudaerr));
+
+	cudaEvent_t syncEvent;
+	cudaEventCreate(&syncEvent);
+	cudaEventRecord(syncEvent, 0);
+	cudaEventSynchronize(syncEvent);
+
+	cudaMemcpy(potField, cudaPotField, potFieldSize * sizeof(float), cudaMemcpyDeviceToHost);
+	cudaDeviceReset();
+	printf("\nSolved success!");
+}

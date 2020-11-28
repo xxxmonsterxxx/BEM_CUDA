@@ -9,43 +9,71 @@ using namespace GalerkinMethod;
 
 int main()
 {
-    uint start_time;
-    uint end_time;
-    uint spand_time;
+    //uint start_time;
+    //uint end_time;
+    //uint spand_time;
 
-    GalerkinMethod::InitInputData();
-//    GalerkinCuda::CalculatePotentialField();
-    GalerkinSerial::CalculatePotentialField();
-    for (int i = 0; i < potFieldSize; i++)
+    ////----------------------------------------------------
+    ////----------------------------------------------------
+    //GalerkinMethod::InitInputData();
+    ////----------------------------------------------------
+    //start_time = clock();
+    //GalerkinCuda::CalculateInfMatrix();
+    //end_time = clock();
+    //spand_time = end_time - start_time;
+    //printf("\nCuda inf matr computation time = %d\n", spand_time);
+
+    //start_time = clock();
+    //GalerkinSerial::CalculateInfMatrix();
+    //end_time = clock();
+    //spand_time = end_time - start_time;
+    //printf("\nSeq. inf matr computation time = %d\n", spand_time);
+    ////----------------------------------------------------
+    //GalerkinMethod::InitInputSmoothData();
+    ////----------------------------------------------------
+    //start_time = clock();
+    //GalerkinCudaSmooth::CalculateInfMatrix();
+    //end_time = clock();
+    //spand_time = end_time - start_time;
+    //printf("\nCuda smooth inf matr computation time = %d\n", spand_time);
+
+    //start_time = clock();
+    //GalerkinSmoothSerial::CalculateInfMatrix();
+    //end_time = clock();
+    //spand_time = end_time - start_time;
+    //printf("\nSeq. smooth inf matr computation time = %d\n", spand_time);
+    ////----------------------------------------------------
+    ////----------------------------------------------------
+    //start_time = clock();
+    //GalerkinCuda::CalculatePotentialField();
+    //end_time = clock();
+    //spand_time = end_time - start_time;
+    //printf("\nCuda calc potential field computation time = %d\n", spand_time);
+
+    //start_time = clock();
+    //GalerkinSerial::CalculatePotentialField();
+    //end_time = clock();
+    //spand_time = end_time - start_time;
+    //printf("\Seq. calc potential field computation time = %d\n", spand_time);
+    //----------------------------------------------------
+    //start_time = clock();
+    GalerkinMethod::InitInputSmoothData();
+    GalerkinSmoothSerial::CalculatePotentialField();
+    for (int i = 0; i < potFieldSize; i++) {
         printf("\n%f", potField[i]);
-    /*for (int i = 0; i < 4; i++) {
-        start_time = clock();
-        GalerkinCuda::CalculateInfMatrix();
-        end_time = clock();
-        spand_time = end_time - start_time;
-        printf("\nCuda computation time = %d\n", spand_time);
     }
 
-    start_time = clock();
-    GalerkinSerial::Solve();
+    //end_time = clock();
+    //spand_time = end_time - start_time;
+    //printf("\nCuda smooth calc potential field computation time = %d\n", spand_time);
+
+    /*start_time = clock();
+    GalerkinSmoothSerial::CalculatePotentialField();
     end_time = clock();
     spand_time = end_time - start_time;
-    printf("\nSeq. computation time = %d\n", spand_time);*/
-
-    /*GalerkinMethod::InitInputSmoothData();
-    for (int i = 0; i < 4; i++) {
-        start_time = clock();
-        GalerkinCudaSmooth::CalculateInfMatrix();
-        end_time = clock();
-        spand_time = end_time - start_time;
-        printf("\nCuda computation time = %d\n", spand_time);
-    }
-
-    start_time = clock();
-    GalerkinSmoothSerial::CalculateInfMatrix();
-    end_time = clock();
-    spand_time = end_time - start_time;
-    printf("\nSeq. computation time = %d\n", spand_time);*/
+    printf("\Seq. smooth calc potential field computation time = %d\n", spand_time);*/
+    //----------------------------------------------------
+    
 
     return 0;
 }

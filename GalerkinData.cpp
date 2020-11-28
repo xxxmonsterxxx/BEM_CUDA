@@ -158,4 +158,39 @@ void GalerkinMethod::InitInputSmoothData()
 
 	initialisedSmoothData = true;
 	printf("\nSmooth data input OK! BE num = %d Coeff num = %d", beNum, beNum);
+	input_stream.close();
+
+	input_file_name = "D:/repos/BEM_CUDA/bem_coeffs.txt";
+	input_stream.open(input_file_name);
+	input_stream >> coeffsSize;
+	if (coeffsSize == 0 || coeffsSize != beNum) {
+		printf("\nERROR! Incorrect coefficients!");
+		input_stream.close();
+	}
+	else {
+		coeffs = new float[coeffsSize];
+
+		for (int i = 0; i < coeffsSize; i++)
+			input_stream >> coeffs[i];
+
+		input_stream.close();
+
+		initialisedCoeffs = true;
+		printf("\nInput coeffs OK!");
+	}
+
+	fdSizeX = 10 + 1;
+	fdSizeY = 10 + 1;
+	potFieldSize = 3 * fdSizeX * fdSizeY;
+	float stepX = 10. / (fdSizeX - 1);
+	float stepY = 8. / (fdSizeY - 1);
+	potField = new float[potFieldSize];
+	for (uint i = 0; i < fdSizeX; i++) {
+		for (uint j = 0; j < fdSizeY; j++) {
+			uint index = (i * fdSizeY + j) * 3;
+			potField[index + 0] = -5 + i * stepX;
+			potField[index + 1] = -8 + j * stepY;
+			potField[index + 2] = 0;
+		}
+	}
 }
